@@ -33,6 +33,18 @@ function Base.show(io::IO, series::BarSeries)
     return nothing
 end
 
+function Base.show(io::IO, series::QuiverSeries)
+    print(io, "QuiverSeries(")
+    print(io, "n=", length(series.X))
+    if !isempty(series.label)
+        print(io, ", label=")
+        _show_quoted(io, series.label)
+    end
+    print(io, ", order=", series.order)
+    print(io, ")")
+    return nothing
+end
+
 function Base.show(io::IO, series::ContourSeries)
     print(io, "ContourSeries(")
     print(io, "mode=")

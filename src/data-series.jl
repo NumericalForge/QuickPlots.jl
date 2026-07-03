@@ -175,6 +175,71 @@ mutable struct BarSeries <: DataSeries
 end
 
 
+"""
+    QuiverSeries(X::AbstractVector, Y::AbstractVector, U::AbstractVector, V::AbstractVector; kwargs...)
+
+Store the data and styling for a quiver/vector-field chart series.
+
+`X`, `Y`, `U`, and `V` must have equal length. Most users should create quiver
+series with [`add_quiver`](@ref), which also supports rectilinear grid inputs.
+
+# Keyword options
+- `color`: arrow color. `:auto` is not supported; quiver defaults to black.
+- `line_width`: positive shaft stroke width.
+- `max_length`: positive maximum arrow length in screen-space points after normalization.
+- `head_length`: positive requested arrowhead length in points.
+- `label`: legend label; an empty label keeps the series out of the legend.
+- `order`: nonnegative draw order; `0` is assigned by [`add_series`](@ref).
+"""
+mutable struct QuiverSeries <: DataSeries
+    X         ::AbstractVector
+    Y         ::AbstractVector
+    U         ::AbstractVector
+    V         ::AbstractVector
+    color     ::Color
+    line_width::Float64
+    max_length::Float64
+    head_length::Float64
+    label     ::AbstractString
+    order     ::Int
+
+    function QuiverSeries(
+        X::AbstractVector,
+        Y::AbstractVector,
+        U::AbstractVector,
+        V::AbstractVector;
+        color::Union{Symbol,Color,Tuple}=:black,
+        line_width::Real=0.5,
+        max_length::Real=12.0,
+        head_length::Real=4.0,
+        label::AbstractString="",
+        order=0,
+    )
+        length(X) == length(Y) == length(U) == length(V) || throw(ArgumentError("Length of X, Y, U, and V arrays must be equal"))
+        line_width > 0 || throw(ArgumentError("Line width must be greater than zero"))
+        max_length > 0 || throw(ArgumentError("Maximum arrow length must be greater than zero"))
+        head_length > 0 || throw(ArgumentError("Arrow head length must be greater than zero"))
+        color == :auto && throw(ArgumentError("QuiverSeries does not support color=:auto; use an explicit color"))
+
+        n = length(X)
+        resolved_color = resolve_color(color)
+
+        return new(
+            X[1:n],
+            Y[1:n],
+            U[1:n],
+            V[1:n],
+            resolved_color,
+            float(line_width),
+            float(max_length),
+            float(head_length),
+            label,
+            order,
+        )
+    end
+end
+
+
 function draw_polygon(cc::CairoContext, x, y, n, length, color, strokecolor; angle=0, draw_stroke=true)
     Δθ = 360/n
     minθ = angle + 90

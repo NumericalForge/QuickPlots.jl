@@ -8,6 +8,7 @@ using QuickCharts
     include("chart-grid.jl")
     include("colormap.jl")
     include("contour.jl")
+    include("quiver.jl")
     include("colors.jl")
     include("video-builder.jl")
     include("typesetting.jl")

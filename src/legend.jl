@@ -54,7 +54,7 @@ mutable struct Legend<:FigureComponent
     function Legend(;
         location::Symbol = :top_right,
         font::String = "serif",
-        font_size::Float64 = 7.0,
+        font_size::Real = 7.0,
         background=nothing,
         ncols::Int = 1,
         # title::String = ""
@@ -66,7 +66,7 @@ mutable struct Legend<:FigureComponent
         return new(
             location,
             font,
-            font_size,
+            float(font_size),
             resolve_color(background),
             ncols,
             0.0,

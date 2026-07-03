@@ -4,7 +4,7 @@
     Chart(;
         size=(8cm, 5cm), font="NewComputerModern", font_size=10.0,
         xlimits, ylimits, aspect_ratio=:auto,
-        nxticks=7, nyticks=6,
+        nxticks=:auto, nyticks=:auto,
         title="", background=nothing,
         xlabel="`x`", ylabel="`y`",
         xticks=Float64[], yticks=Float64[],
@@ -19,7 +19,8 @@ Construct a 2D chart figure with axes, legend, and optional tick customization.
 - `font_size::Real`: base font size.
 - `xlimits::Vector{<:Real}`, `ylimits::Vector{<:Real}`: axis limits `[min,max]`; use empty vectors for auto scaling.
 - `aspect_ratio::Symbol`: `:auto` or `:equal`.
-- `nxticks::Int`, `nyticks::Int`: target number of tick intervals on each axis.
+- `nxticks::Union{Int,Symbol}`, `nyticks::Union{Int,Symbol}`: target number of tick
+  intervals, or `:auto` to choose a nice interval count that includes both endpoints.
 - `title::AbstractString`: chart title, centered above the plot area.
 - `background::Union{Nothing,Symbol,Color,Tuple}`: full-figure background fill; `nothing` leaves the figure unfilled.
 - `xlabel::AbstractString`, `ylabel::AbstractString`: axis labels.
@@ -86,8 +87,8 @@ mutable struct Chart <: Figure
         xlimits=Float64[],
         ylimits=Float64[],
         aspect_ratio=:auto,
-        nxticks::Int=7,
-        nyticks::Int=6,
+        nxticks::Union{Int,Symbol}=:auto,
+        nyticks::Union{Int,Symbol}=:auto,
         title::AbstractString="",
         background::Union{Nothing,Symbol,Color,Tuple}=nothing,
         xlabel::AbstractString="`x`",
@@ -107,6 +108,8 @@ mutable struct Chart <: Figure
         font_size > 0 || throw(ArgumentError("Chart: font_size must be positive"))
         legend_font_size > 0 || throw(ArgumentError("Chart: legend_font_size must be positive"))
         aspect_ratio in (:auto, :equal) || throw(ArgumentError("Chart: Invalid aspect_ratio: $aspect_ratio. Use :auto or :equal. Got $(repr(aspect_ratio))."))
+        font_size = float(font_size)
+        legend_font_size = float(legend_font_size)
 
         width, height = size
         outerpad = 0.01 * min(width, height)
@@ -134,6 +137,7 @@ end
 
 _series_uses_chart_palette(::DataSeries) = true
 _series_uses_chart_palette(::ContourSeries) = false
+_series_uses_chart_palette(::QuiverSeries) = false
 
 """
     add_series(chart::Chart, series::DataSeries)
@@ -319,6 +323,130 @@ function add_contour(
 end
 
 
+function _quiver_vector_stride(stride)
+    stride isa Integer || throw(ArgumentError("add_quiver: stride must be a positive integer for vector inputs"))
+    stride > 0 || throw(ArgumentError("add_quiver: stride must be positive"))
+    return Int(stride)
+end
+
+
+function _quiver_grid_stride(stride)
+    if stride isa Integer
+        stride > 0 || throw(ArgumentError("add_quiver: stride must be positive"))
+        s = Int(stride)
+        return s, s
+    elseif stride isa Tuple && length(stride) == 2 && all(value -> value isa Integer, stride)
+        sx = Int(stride[1])
+        sy = Int(stride[2])
+        sx > 0 && sy > 0 || throw(ArgumentError("add_quiver: stride components must be positive"))
+        return sx, sy
+    end
+    throw(ArgumentError("add_quiver: stride must be a positive integer or a pair of positive integers for grid inputs"))
+end
+
+
+function _quiver_grid_vectors(x::AbstractVector, y::AbstractVector, U::AbstractMatrix, V::AbstractMatrix, stride)
+    length(x) > 0 || throw(ArgumentError("add_quiver: x must contain at least one point"))
+    length(y) > 0 || throw(ArgumentError("add_quiver: y must contain at least one point"))
+    size(U) == (length(y), length(x)) || throw(ArgumentError("add_quiver: size(U) must equal (length(y), length(x))"))
+    size(V) == (length(y), length(x)) || throw(ArgumentError("add_quiver: size(V) must equal (length(y), length(x))"))
+
+    sx, sy = _quiver_grid_stride(stride)
+    X = Float64[]
+    Y = Float64[]
+    Uflat = Float64[]
+    Vflat = Float64[]
+
+    for iy in 1:sy:length(y)
+        for ix in 1:sx:length(x)
+            push!(X, float(x[ix]))
+            push!(Y, float(y[iy]))
+            push!(Uflat, float(U[iy, ix]))
+            push!(Vflat, float(V[iy, ix]))
+        end
+    end
+
+    return X, Y, Uflat, Vflat
+end
+
+
+"""
+    add_quiver(chart::Chart, X::AbstractVector, Y::AbstractVector, U::AbstractVector, V::AbstractVector; kwargs...)
+
+Add a quiver/vector-field series to `chart` from flat anchor and vector arrays.
+
+Arrows are normalized in screen space so the longest visible arrow is drawn
+with length `max_length` points.
+"""
+function add_quiver(
+    chart::Chart,
+    X::AbstractVector,
+    Y::AbstractVector,
+    U::AbstractVector,
+    V::AbstractVector;
+    color::Union{Symbol,Color,Tuple}=:black,
+    line_width::Real=0.5,
+    max_length::Real=12.0,
+    head_length::Real=4.0,
+    stride=1,
+    label::AbstractString="",
+    order::Int=0,
+)
+    s = _quiver_vector_stride(stride)
+    series = QuiverSeries(
+        X[1:s:end],
+        Y[1:s:end],
+        U[1:s:end],
+        V[1:s:end];
+        color=color,
+        line_width=line_width,
+        max_length=max_length,
+        head_length=head_length,
+        label=label,
+        order=order,
+    )
+    return add_series(chart, series)
+end
+
+
+"""
+    add_quiver(chart::Chart, x::AbstractVector, y::AbstractVector, U::AbstractMatrix, V::AbstractMatrix; kwargs...)
+
+Add a quiver/vector-field series to `chart` from a rectilinear grid.
+
+`U` and `V` must have size `(length(y), length(x))`.
+"""
+function add_quiver(
+    chart::Chart,
+    x::AbstractVector,
+    y::AbstractVector,
+    U::AbstractMatrix,
+    V::AbstractMatrix;
+    color::Union{Symbol,Color,Tuple}=:black,
+    line_width::Real=0.5,
+    max_length::Real=12.0,
+    head_length::Real=4.0,
+    stride=1,
+    label::AbstractString="",
+    order::Int=0,
+)
+    X, Y, Uflat, Vflat = _quiver_grid_vectors(x, y, U, V, stride)
+    series = QuiverSeries(
+        X,
+        Y,
+        Uflat,
+        Vflat;
+        color=color,
+        line_width=line_width,
+        max_length=max_length,
+        head_length=head_length,
+        label=label,
+        order=order,
+    )
+    return add_series(chart, series)
+end
+
+
 function _tag_anchor_alignment(anchor::Symbol)
     anchor == :top && return "center", "top"
     anchor == :top_right && return "right", "top"
@@ -454,33 +582,7 @@ function configure!(c::Chart)
     c.figure_frame = Frame(c.figure_frame.x, c.figure_frame.y, c.width, c.height)
 
     configure!(c, c.xaxis, c.yaxis)
-
-    if c.aspect_ratio == :equal
-        plot_frame = _chart_plot_frame(c)
-        xmin, xmax = c.xaxis.limits
-        ymin, ymax = c.yaxis.limits
-        r = min(plot_frame.width / (xmax - xmin), plot_frame.height / (ymax - ymin))
-        dx = 0.5 * (plot_frame.width / r - (xmax - xmin))
-        dy = 0.5 * (plot_frame.height / r - (ymax - ymin))
-
-        c.xaxis.limits = [xmin - dx, xmax + dx]
-        c.yaxis.limits = [ymin - dy, ymax + dy]
-        if !c.xaxis.manual_ticks
-            c.xaxis.ticks = Float64[]
-        end
-        if !c.yaxis.manual_ticks
-            c.yaxis.ticks = Float64[]
-        end
-        if !c.xaxis.manual_tick_labels
-            c.xaxis.tick_labels = String[]
-        end
-        if !c.yaxis.manual_tick_labels
-            c.yaxis.tick_labels = String[]
-        end
-
-        configure!(c.xaxis)
-        configure!(c.yaxis)
-    end
+    _prepare_chart_side_items!(c)
 
     _assign_chart_frames!(c)
 
@@ -557,6 +659,17 @@ function _series_axis_extent(series::BarSeries, ax::Axis)
 end
 
 
+function _series_axis_extent(series::QuiverSeries, ax::Axis)
+    if ax.direction == :horizontal
+        isempty(series.X) && return nothing
+        return minimum(series.X), maximum(series.X)
+    end
+
+    isempty(series.Y) && return nothing
+    return minimum(series.Y), maximum(series.Y)
+end
+
+
 function _series_axis_extent(series::ContourSeries, ax::Axis)
     if ax.direction == :horizontal
         isempty(series.x) && return nothing
@@ -575,6 +688,7 @@ function _chart_contour_colorbars(c::Chart)
         _contour_has_colorbar(series) || continue
         bins = max(2, min(length(series.levels), 6))
         colorbar_label = isempty(series.colorbar_label) ? series.label : series.colorbar_label
+        colorbar_ticks = isempty(series.colorbar_ticks) ? series.levels : series.colorbar_ticks
         push!(
             colorbars,
             Colorbar(
@@ -584,10 +698,12 @@ function _chart_contour_colorbars(c::Chart)
                 label=colorbar_label,
                 font_size=c.xaxis.font_size,
                 font=c.xaxis.font,
-                ticks=series.colorbar_ticks,
+                ticks=colorbar_ticks,
                 tick_labels=series.colorbar_tick_labels,
                 bins=bins,
                 length_factor=series.colorbar_ratio,
+                discrete=series.filled,
+                levels=series.levels,
             ),
         )
     end
@@ -736,6 +852,30 @@ function _chart_has_legend(c::Chart)
 end
 
 
+function _prepare_chart_side_items!(c::Chart)
+    _chart_has_legend(c) && configure!(c, c.legend)
+    c.left_items = FigureComponent[]
+    c.right_items = FigureComponent[]
+    c.top_items = FigureComponent[]
+    c.bottom_items = FigureComponent[]
+
+    for cb in _chart_contour_colorbars(c)
+        configure!(c, cb)
+        if cb.location == :left
+            push!(c.left_items, cb)
+        elseif cb.location == :right
+            push!(c.right_items, cb)
+        elseif cb.location == :top
+            push!(c.top_items, cb)
+        elseif cb.location == :bottom
+            push!(c.bottom_items, cb)
+        end
+    end
+
+    return nothing
+end
+
+
 function _chart_plot_frame(c::Chart)
     left_margin = c.outerpad + c.yaxis.width
     right_margin = c.outerpad
@@ -797,36 +937,38 @@ function _chart_plot_frame(c::Chart)
 end
 
 
-function _assign_chart_frames!(c::Chart)
-    _chart_has_legend(c) && configure!(c, c.legend)
-    c.left_items = FigureComponent[]
-    c.right_items = FigureComponent[]
-    c.top_items = FigureComponent[]
-    c.bottom_items = FigureComponent[]
-    for cb in _chart_contour_colorbars(c)
-        configure!(c, cb)
-        if cb.location == :left
-            push!(c.left_items, cb)
-        elseif cb.location == :right
-            push!(c.right_items, cb)
-        elseif cb.location == :top
-            push!(c.top_items, cb)
-        elseif cb.location == :bottom
-            push!(c.bottom_items, cb)
-        end
-    end
+function _chart_canvas_frame(c::Chart, plot_frame::Frame)
+    c.aspect_ratio == :auto && return plot_frame
 
+    xmin, xmax = c.xaxis.limits
+    ymin, ymax = c.yaxis.limits
+    dx = abs(xmax - xmin)
+    dy = abs(ymax - ymin)
+    (dx > 0 && dy > 0) || return plot_frame
+
+    ratio = min(plot_frame.width / dx, plot_frame.height / dy)
+    width = ratio * dx
+    height = ratio * dy
+    x = plot_frame.x + 0.5 * (plot_frame.width - width)
+    y = plot_frame.y + 0.5 * (plot_frame.height - height)
+
+    return Frame(x, y, width, height)
+end
+
+
+function _assign_chart_frames!(c::Chart)
     plot_frame = _chart_plot_frame(c)
     plot_frame.width > 0 && plot_frame.height > 0 || throw(ArgumentError("Chart: insufficient space for plot area"))
+    canvas_frame = _chart_canvas_frame(c, plot_frame)
 
-    c.canvas.frame = plot_frame
+    c.canvas.frame = canvas_frame
     configure!(c, c.canvas)
 
-    c.xaxis.width = plot_frame.width
-    c.xaxis.frame = Frame(plot_frame.x, plot_frame.y + plot_frame.height, plot_frame.width, c.xaxis.height)
+    c.xaxis.width = canvas_frame.width
+    c.xaxis.frame = Frame(canvas_frame.x, canvas_frame.y + canvas_frame.height, canvas_frame.width, c.xaxis.height)
 
-    c.yaxis.height = plot_frame.height
-    c.yaxis.frame = Frame(plot_frame.x - c.yaxis.width, plot_frame.y, c.yaxis.width, plot_frame.height)
+    c.yaxis.height = canvas_frame.height
+    c.yaxis.frame = Frame(canvas_frame.x - c.yaxis.width, canvas_frame.y, c.yaxis.width, canvas_frame.height)
 
     c.overlay_items = FigureComponent[a for a in c.annotations]
 
@@ -911,6 +1053,46 @@ end
 _contour_fill_seam_width(::RenderContext) = 0.25
 
 
+_effective_arrow_head_length(length::Float64, requested::Float64) = min(requested, 0.6 * length)
+
+
+function _draw_filled_arrow!(cairo_ctx::CairoContext, x1::Float64, y1::Float64, x2::Float64, y2::Float64; head_length::Float64)
+    Δx = x2 - x1
+    Δy = y2 - y1
+    length = hypot(Δx, Δy)
+    length < 1.0e-8 && return nothing
+
+    head = _effective_arrow_head_length(length, head_length)
+    if length < 0.8 * head
+        move_to(cairo_ctx, x1, y1)
+        line_to(cairo_ctx, x2, y2)
+        stroke(cairo_ctx)
+        return nothing
+    end
+
+    ux = Δx / length
+    uy = Δy / length
+    nx = -uy
+    ny = ux
+
+    base_x = x2 - head * ux
+    base_y = y2 - head * uy
+    half_width = 0.45 * head
+
+    move_to(cairo_ctx, x1, y1)
+    line_to(cairo_ctx, base_x, base_y)
+    stroke(cairo_ctx)
+
+    move_to(cairo_ctx, x2, y2)
+    line_to(cairo_ctx, base_x + half_width * nx, base_y + half_width * ny)
+    line_to(cairo_ctx, base_x - half_width * nx, base_y - half_width * ny)
+    close_path(cairo_ctx)
+    fill(cairo_ctx)
+
+    return nothing
+end
+
+
 function draw!(c::Chart, ctx::RenderContext, canvas::Canvas)
     # draw grid
     cairo_ctx = ctx.cairo_ctx
@@ -993,6 +1175,45 @@ function draw!(chart::Chart, ctx::RenderContext, p::BarSeries)
         stroke(cairo_ctx)
         set_source_rgb(cairo_ctx, rgb(p.color)...)
     end
+end
+
+
+function draw!(chart::Chart, ctx::RenderContext, p::QuiverSeries)
+    cairo_ctx = ctx.cairo_ctx
+    reset_matrix!(ctx)
+    set_source_rgb(cairo_ctx, rgb(p.color)...)
+    set_line_width(cairo_ctx, p.line_width * ctx.width_scale)
+    set_line_join(cairo_ctx, Cairo.CAIRO_LINE_JOIN_ROUND)
+    set_line_cap(cairo_ctx, Cairo.CAIRO_LINE_CAP_ROUND)
+
+    X = float.(p.X)
+    Y = float.(p.Y)
+    U = float.(p.U)
+    V = float.(p.V)
+
+    valid = Tuple{Float64,Float64,Float64,Float64,Float64,Float64}[]
+    maxnorm = 0.0
+
+    for (x, y, u, v) in zip(X, Y, U, V)
+        isfinite(x) && isfinite(y) && isfinite(u) && isfinite(v) || continue
+        x1, y1 = data2user(chart.canvas, x, y)
+        x2, y2 = data2user(chart.canvas, x + u, y + v)
+        Δx = x2 - x1
+        Δy = y2 - y1
+        length = hypot(Δx, Δy)
+        length > 1.0e-12 || continue
+        push!(valid, (x1, y1, Δx, Δy, x2, y2))
+        maxnorm = max(maxnorm, length)
+    end
+
+    maxnorm > 0 || return nothing
+
+    scale = p.max_length / maxnorm
+    for (x1, y1, Δx, Δy, _, _) in valid
+        _draw_filled_arrow!(cairo_ctx, x1, y1, x1 + scale * Δx, y1 + scale * Δy; head_length=p.head_length)
+    end
+
+    return nothing
 end
 
 
@@ -1206,6 +1427,12 @@ function draw!(c::Chart, ctx::RenderContext, legend::Legend)
             _set_contour_line_dash!(cairo_ctx, plot.line_style, plot.line_width)
             stroke(cairo_ctx)
             set_dash(cairo_ctx, Float64[])
+        elseif plot isa QuiverSeries
+            set_source_rgb(cairo_ctx, rgb(plot.color)...)
+            set_line_width(cairo_ctx, plot.line_width * ctx.width_scale)
+            set_line_join(cairo_ctx, Cairo.CAIRO_LINE_JOIN_ROUND)
+            set_line_cap(cairo_ctx, Cairo.CAIRO_LINE_CAP_ROUND)
+            _draw_filled_arrow!(cairo_ctx, x2, y2, x2 + legend.handle_length, y2; head_length=min(0.45 * legend.handle_length, plot.head_length))
         elseif plot.line_style != :none
             move_to(cairo_ctx, x2, y2)
             rel_line_to(cairo_ctx, legend.handle_length, 0)

@@ -16,12 +16,14 @@ Creates an `Axis` component.
 - `ticks::AbstractArray` : Explicit tick positions (default `Float64[]`).
 - `tick_labels::AbstractArray` : Labels for ticks (default `String[]`). Must match `length(ticks)` when provided.
 - `tick_length::Float64` : Tick mark length input (default `0.4*font_size`).
-- `nticks::Int` : Hint for the number of tick intervals (default `6`).
+- `nticks::Union{Int,Symbol}` : Hint for the number of tick intervals, or `:auto`
+  to choose a "nice" interval count that includes both axis endpoints.
 
 # Notes
 - `direction` and `location` control orientation and side.
 - If `tick_labels` are given, their count must equal `length(ticks)`.
-- `nticks` is a hint. Explicit `ticks` take precedence.
+- `nticks=:auto` is the default and includes both axis endpoints with uniform spacing.
+- Explicit `ticks` take precedence.
 
 """
 mutable struct Axis<:FigureComponent
@@ -38,6 +40,8 @@ mutable struct Axis<:FigureComponent
     manual_tick_labels::Bool
     show_ticks::Bool
     tick_length::Float64
+    nticks_mode::Symbol
+    nticks_target::Int
     nticks     ::Int
     tick_exponent::Int
     exponent_box::TextBox
@@ -58,7 +62,8 @@ mutable struct Axis<:FigureComponent
         ticks=Real[],
         tick_labels::AbstractArray=String[],
         tick_length::Real=3.0,
-        nticks::Int=6,
+        nticks::Union{Int,Symbol}=:auto,
+        auto_nticks_target::Union{Nothing,Int}=nothing,
         )
 
         if location==:none
@@ -67,6 +72,14 @@ mutable struct Axis<:FigureComponent
             else
                 location = :left
             end
+        end
+
+        if nticks isa Symbol
+            nticks == :auto || throw(ArgumentError("Axis: nticks must be a positive integer or :auto"))
+        elseif nticks isa Int
+            nticks > 0 || throw(ArgumentError("Axis: nticks must be positive"))
+        else
+            throw(ArgumentError("Axis: nticks must be a positive integer or :auto"))
         end
 
         show_ticks = true
@@ -88,9 +101,14 @@ mutable struct Axis<:FigureComponent
         ticks = collect(float.(ticks))
         manual_ticks = show_ticks && length(ticks) > 0
         manual_tick_labels = show_ticks && length(tick_labels) > 0
+        nticks_mode = nticks === :auto ? :auto : :fixed
+        default_target = direction == :horizontal ? 7 : 6
+        nticks_target = nticks === :auto ? something(auto_nticks_target, default_target) : Int(nticks)
+        nticks_target > 0 || throw(ArgumentError("Axis: auto_nticks_target must be positive"))
+        nticks_effective = nticks_target
 
-        return new(direction, location, limits, auto_limits, label, font, font_size, ticks, tick_labels,
-            manual_ticks, manual_tick_labels, show_ticks, tick_length, nticks, 0, TextBox(), 0.0, 0.0, 3.0, 0.0, 0.0, Frame())
+        return new(direction, location, limits, auto_limits, label, font, float(font_size), ticks, tick_labels,
+            manual_ticks, manual_tick_labels, show_ticks, float(tick_length), nticks_mode, nticks_target, nticks_effective, 0, TextBox(), 0.0, 0.0, 3.0, 0.0, 0.0, Frame())
     end
 end
 
@@ -118,6 +136,63 @@ function get_bin_length(vinf, vsup, n)
     end
 
     return round(mant*10^ex, sigdigits=2)*sign(vsup-vinf)
+end
+
+
+const _nice_tick_mantissas = (1.0, 1.5, 2.0, 2.5, 4.0, 5.0, 10.0)
+
+
+function _tick_decimal_places(value::Real; max_digits::Int=8)
+    v = abs(float(value))
+    v == 0.0 && return 0
+
+    for digits in 0:max_digits
+        atol = 10.0^(-digits - 8)
+        isapprox(v, round(v; digits=digits); atol=atol, rtol=1.0e-8) && return digits
+    end
+
+    return max_digits
+end
+
+
+function _nice_step_score(step::Real)
+    magnitude = abs(float(step))
+    magnitude == 0.0 && return (Inf, typemax(Int))
+
+    exponent = floor(Int, log10(magnitude))
+    mantissa = magnitude / 10.0^exponent
+    beauty = minimum(abs(mantissa - candidate) for candidate in _nice_tick_mantissas)
+    decimals = _tick_decimal_places(magnitude)
+    return beauty, decimals
+end
+
+
+function _normalize_tick_value(value::Real)
+    v = float(value)
+    return isapprox(v, 0.0; atol=1.0e-12) ? 0.0 : v
+end
+
+
+function _auto_ticks(vinf::Real, vsup::Real, target::Int)
+    target > 0 || throw(ArgumentError("Axis: target must be positive"))
+    span = abs(float(vsup) - float(vinf))
+    span > 0 || return [_normalize_tick_value(float(vinf))]
+
+    candidates = max(2, target - 3):(target + 3)
+    best_n = first(candidates)
+    best_score = (Inf, typemax(Int), typemax(Int), typemax(Int))
+
+    for n in candidates
+        step = span / n
+        beauty, decimals = _nice_step_score(step)
+        score = (beauty, abs(n - target), decimals, n)
+        if score < best_score
+            best_score = score
+            best_n = n
+        end
+    end
+
+    return [_normalize_tick_value(tick) for tick in range(float(vinf), float(vsup); length=best_n + 1)]
 end
 
 
@@ -256,14 +331,18 @@ function configure!(ax::Axis)
         _configure_exponent_box!(ax, 0)
     elseif !ax.manual_ticks || length(ax.ticks) == 0
         vinf, vsup = ax.limits
-        dv = get_bin_length(vinf, vsup, ax.nticks)
-        digits = _tick_round_digits(dv)
+        if ax.nticks_mode == :auto
+            ax.ticks = _auto_ticks(vinf, vsup, ax.nticks_target)
+        else
+            dv = get_bin_length(vinf, vsup, ax.nticks_target)
+            digits = _tick_round_digits(dv)
 
-        # roundup first tick
-        m = mod(vinf,dv)
-        vinf = m==0 ? vinf : vinf - m + dv
+            # roundup first tick
+            m = mod(vinf,dv)
+            vinf = m==0 ? vinf : vinf - m + dv
 
-        ax.ticks = unique(round.(collect(vinf:dv:vsup), digits=digits))
+            ax.ticks = unique(round.(collect(vinf:dv:vsup), digits=digits))
+        end
     else # check ticks
         vmin = minimum(ax.limits)
         vmax = maximum(ax.limits)

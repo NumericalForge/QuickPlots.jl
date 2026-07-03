@@ -21,8 +21,8 @@ Base.showerror(io::IO, e::QuickChartsException) = printstyled(io, "QuickChartsEx
 
 include("include.jl")
 
-export cm, Color, Colormap, Chart, ChartGrid, DataSeries, LineSeries, BarSeries, ContourSeries, Legend, Colorbar, Annotation
-export add_series, add_line, add_scatter, add_bar, add_contour, add_annotation, add_chart, add_frame
+export cm, Color, Colormap, Chart, ChartGrid, DataSeries, LineSeries, BarSeries, ContourSeries, QuiverSeries, Legend, Colorbar, Annotation
+export add_series, add_line, add_scatter, add_bar, add_contour, add_quiver, add_annotation, add_chart, add_frame
 export lighten, darken, gray, render, save
 export Figure, FigureComponent, Frame, TextBox, RenderContext, Canvas, Axis
 export VideoBuilder

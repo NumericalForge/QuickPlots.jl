@@ -1,6 +1,20 @@
 using Test
 using QuickCharts
 
+function _canvas_scale_ratio(chart::Chart)
+    dx = chart.xaxis.limits[2] - chart.xaxis.limits[1]
+    dy = chart.yaxis.limits[2] - chart.yaxis.limits[1]
+    return chart.canvas.frame.width / dx, chart.canvas.frame.height / dy
+end
+
+
+function _frame_contains(outer::Frame, inner::Frame; atol::Float64=1.0e-8)
+    return inner.x >= outer.x - atol &&
+           inner.y >= outer.y - atol &&
+           inner.x + inner.width <= outer.x + outer.width + atol &&
+           inner.y + inner.height <= outer.y + outer.height + atol
+end
+
 
 X = collect(0:0.4:8)
 Y1 = sin.(X)
@@ -11,6 +25,11 @@ default_chart = Chart()
 @test default_chart.xaxis.font_size == 10.0
 @test default_chart.yaxis.font_size == 10.0
 @test default_chart.legend.font_size == 10.0
+
+int_font_chart = Chart(font_size=7, legend_font_size=8)
+@test int_font_chart.xaxis.font_size == 7.0
+@test int_font_chart.yaxis.font_size == 7.0
+@test int_font_chart.legend.font_size == 8.0
 
 chart = Chart(
     title="Trigonometric Responses",
@@ -167,3 +186,33 @@ x_seg, y_seg, angle_seg = QuickCharts._resolve_tag_point_and_tangent(peak_chart.
 expected_angle_seg = QuickCharts._segment_tangent_angle(peak_chart.canvas, peak_x, peak_y, 1)
 @test isapprox(angle_seg, expected_angle_seg; atol=1.0e-8)
 @test x_seg < x_vertex
+
+equal_chart = Chart(
+    size=(8cm, 6cm),
+    background=:white,
+    aspect_ratio=:equal,
+    xlimits=[0.0, 10.0],
+    ylimits=[0.0, 10.0],
+)
+add_line(equal_chart, [0.0, 10.0], [0.0, 10.0]; label="diag")
+QuickCharts.configure!(equal_chart)
+sx, sy = _canvas_scale_ratio(equal_chart)
+@test isapprox(sx, sy; atol=1.0e-8)
+@test equal_chart.xaxis.limits == [0.0, 10.0]
+@test equal_chart.yaxis.limits == [0.0, 10.0]
+@test _frame_contains(QuickCharts._chart_plot_frame(equal_chart), equal_chart.canvas.frame)
+
+auto_chart = Chart(
+    size=(8cm, 6cm),
+    background=:white,
+    aspect_ratio=:auto,
+    xlimits=[0.0, 10.0],
+    ylimits=[0.0, 10.0],
+)
+add_line(auto_chart, [0.0, 10.0], [0.0, 10.0]; label="diag")
+QuickCharts.configure!(auto_chart)
+auto_plot_frame = QuickCharts._chart_plot_frame(auto_chart)
+@test isapprox(auto_chart.canvas.frame.x, auto_plot_frame.x; atol=1.0e-8)
+@test isapprox(auto_chart.canvas.frame.y, auto_plot_frame.y; atol=1.0e-8)
+@test isapprox(auto_chart.canvas.frame.width, auto_plot_frame.width; atol=1.0e-8)
+@test isapprox(auto_chart.canvas.frame.height, auto_plot_frame.height; atol=1.0e-8)
