@@ -1,6 +1,7 @@
 # QuickCharts.jl
 
 
+[![docs-stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://numericalforge.github.io/QuickCharts.jl/stable/)
 [![docs-dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://numericalforge.github.io/QuickCharts.jl/dev/)
 
 
