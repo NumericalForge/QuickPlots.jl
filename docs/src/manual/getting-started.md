@@ -153,7 +153,16 @@ including subscripts, superscripts, fractions, brackets, and bold text. Use
 parentheses for grouping instead of braces; for example, write
 `` `(a + b)/(c + d)` `` and `` `x_(i+1)^2` `` rather than brace-grouped forms.
 The `frac` function is not required for fractions, because slash notation can
-turn grouped expressions into fractions directly.
+turn grouped expressions into fractions directly. Text that should remain
+upright inside math can be enclosed in single or double quotes. For example,
+
+```julia
+label = "`σ_'vm'` [MPa]"
+label = "`σ_\"vm\"` [MPa]"
+```
+
+A single quote immediately following a valid math base denotes a prime. Double
+quotes always delimit upright text, so they are unambiguous in that context.
 
 ## Colors
 

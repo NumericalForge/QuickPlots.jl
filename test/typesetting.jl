@@ -78,7 +78,7 @@ num_identifier_nodes = QuickCharts.parse_typeset("`2foo`")
 @test QuickCharts._implicit_atom_spacing(num_identifier_nodes[1], num_identifier_nodes[2], 10.0) == 0.0
 @test QuickCharts._implicit_atom_spacing(signed_number_nodes[1], signed_number_nodes[2], 10.0) == 0.0
 
-quoted_text_nodes = QuickCharts.parse_typeset("`x_\\\"min\\\"`")
+quoted_text_nodes = QuickCharts.parse_typeset("`x_\"min\"`")
 @test length(quoted_text_nodes) == 1
 @test quoted_text_nodes[1] isa QuickCharts.TSScripts
 sub = quoted_text_nodes[1].sub
@@ -86,10 +86,15 @@ sub = quoted_text_nodes[1].sub
 @test sub.text == "min"
 @test !sub.italic
 
-mixed_quoted_nodes = QuickCharts.parse_typeset("`alpha + \\\"text\\\"`")
+mixed_quoted_nodes = QuickCharts.parse_typeset("`alpha + \"text\"`")
 @test mixed_quoted_nodes[end] isa QuickCharts.TSAtom
 @test mixed_quoted_nodes[end].text == "text"
 @test !mixed_quoted_nodes[end].italic
+
+double_quoted_after_base_nodes = QuickCharts.parse_typeset("`x\"tag\"`")
+@test length(double_quoted_after_base_nodes) == 2
+@test double_quoted_after_base_nodes[2].text == "tag"
+@test !double_quoted_after_base_nodes[2].italic
 
 frac_nodes = QuickCharts.parse_typeset("`frac(a,b)`")
 @test length(frac_nodes) == 1

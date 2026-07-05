@@ -197,22 +197,15 @@ end
     return node isa TSScripts || node isa TSParenGroup || node isa TSGroup
 end
 
-function _parse_quoted_text(s::AbstractString, i::Int)
-    (i > lastindex(s) || s[i] != '\\') && return nothing, i
-    j = _next(s, i)
-    (j > lastindex(s) || s[j] != '"') && return nothing, i
-    text_start = _next(s, j)
+function _parse_double_quoted_text(s::AbstractString, i::Int)
+    (i > lastindex(s) || s[i] != '"') && return nothing, i
+    text_start = _next(s, i)
     pos = text_start
-    while pos <= lastindex(s)
-        if s[pos] == '\\'
-            k = _next(s, pos)
-            if k <= lastindex(s) && s[k] == '"'
-                return TSAtom(String(s[text_start:prevind(s, pos)]), false, false), _next(s, k)
-            end
-        end
+    while pos <= lastindex(s) && s[pos] != '"'
         pos = _next(s, pos)
     end
-    return nothing, i
+    pos > lastindex(s) && return nothing, i
+    return TSAtom(String(s[text_start:prevind(s, pos)]), false, false), _next(s, pos)
 end
 
 function _parse_script_arg(s::AbstractString, i::Int)
@@ -240,8 +233,8 @@ function _parse_script_arg(s::AbstractString, i::Int)
         atom, j = _parse_single_quoted_text(s, i)
         atom !== nothing && return atom, j
         return TSAtom("'", false, false), _next(s, i)
-    elseif c == '\\'
-        quoted, j = _parse_quoted_text(s, i)
+    elseif c == '"'
+        quoted, j = _parse_double_quoted_text(s, i)
         quoted !== nothing && return quoted, j
         return _atom_from_char(c, in_math=true), _next(s, i)
     else
@@ -464,8 +457,8 @@ function _parse_math_seq(s::AbstractString, i::Int; stopchars::Set{Char}=Set{Cha
                     i = _next(s, i)
                 end
             end
-        elseif c == '\\'
-            quoted, j = _parse_quoted_text(s, i)
+        elseif c == '"'
+            quoted, j = _parse_double_quoted_text(s, i)
             if quoted !== nothing
                 push!(nodes, quoted)
                 i = j
