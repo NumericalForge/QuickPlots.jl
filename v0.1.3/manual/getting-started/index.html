@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Getting Started · QuickCharts.jl</title><meta name="title" content="Getting Started · QuickCharts.jl"/><meta property="og:title" content="Getting Started · QuickCharts.jl"/><meta property="twitter:title" content="Getting Started · QuickCharts.jl"/><meta name="description" content="Documentation for QuickCharts.jl."/><meta property="og:description" content="Documentation for QuickCharts.jl."/><meta property="twitter:description" content="Documentation for QuickCharts.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">QuickCharts.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox" checked/><label class="tocitem" for="menuitem-2"><span class="docs-label">Manual</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Getting Started</a><ul class="internal"><li><a class="tocitem" href="#A-First-Chart"><span>A First Chart</span></a></li><li><a class="tocitem" href="#Contours"><span>Contours</span></a></li><li><a class="tocitem" href="#Vector-Fields"><span>Vector Fields</span></a></li><li><a class="tocitem" href="#Text-and-Math"><span>Text and Math</span></a></li><li><a class="tocitem" href="#Colors"><span>Colors</span></a></li><li><a class="tocitem" href="#Video-Generation"><span>Video Generation</span></a></li></ul></li><li><a class="tocitem" href="../../tutorial/chart-basics/">Chart Tutorial</a></li><li><a class="tocitem" href="../../tutorial/field-plots/">Field Plots Tutorial</a></li><li><a class="tocitem" href="../../tutorial/chart-grid/">ChartGrid Tutorial</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../api/reference/">Reference</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href>Getting Started</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Getting Started</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/NumericalForge/QuickCharts.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Getting-Started"><a class="docs-heading-anchor" href="#Getting-Started">Getting Started</a><a id="Getting-Started-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-Started" title="Permalink"></a></h1><p>QuickCharts builds figures from a small set of plotting primitives:</p><ul><li><code>Chart</code> creates a single set of axes.</li><li><code>add_line</code>, <code>add_scatter</code>, <code>add_bar</code>, <code>add_contour</code>, and <code>add_quiver</code> add data series.</li><li><code>Annotation</code> and <code>add_annotation</code> add plot-area notes.</li><li><code>ChartGrid</code> combines charts into multi-panel figures.</li><li><code>VideoBuilder</code> and <code>add_frame</code> accumulate frames for animation export.</li><li><code>save</code> writes figures to <code>.pdf</code>, <code>.png</code>, <code>.svg</code>, or <code>.ps</code>, and writes videos to <code>.mp4</code> or <code>.avi</code>.</li></ul><p>Figure sizes are specified in typographic points. The exported <code>cm</code> constant is provided for convenient centimeter-based sizes.</p><p><code>Chart</code> and <code>ChartGrid</code> can also be displayed inline in rich Julia frontends such as VS Code and notebook environments.</p><h2 id="A-First-Chart"><a class="docs-heading-anchor" href="#A-First-Chart">A First Chart</a><a id="A-First-Chart-1"></a><a class="docs-heading-anchor-permalink" href="#A-First-Chart" title="Permalink"></a></h2><p>Load the package, prepare data, and create a chart:</p><pre><code class="language-julia hljs">using QuickCharts
+
+x = collect(0:0.5:6)
+y = sin.(x)
+
+chart = Chart(
+    size = (15cm, 10cm),
+    title = &quot;Sine Response&quot;,
+    font_size = 12.0,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`sin(x)`&quot;,
+    legend = :top_right,
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Chart(size=425.1968503937008 x 283.46456692913387 pt, title=&quot;Sine Response&quot;, axes=&quot;`x`&quot; vs &quot;`sin(x)`&quot;, series=0, annotations=0, legend=:top_right)</code></pre><p>Add a line series. Series labels appear in the legend; an empty label keeps a series out of the legend.</p><pre><code class="language-julia hljs">add_line(chart, x, y; mark = :circle, label = &quot;`sin(x)`&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">LineSeries(n=13, label=&quot;`sin(x)`&quot;, style=:solid, mark=:circle, order=1)</code></pre><p>Export the figure:</p><pre><code class="language-julia hljs">save(chart, &quot;getting-started.svg&quot;)</code></pre><p><img src="../getting-started.svg" alt/></p><p>QuickCharts renders to <code>.pdf</code>, <code>.png</code>, <code>.svg</code>, and <code>.ps</code>.</p><h2 id="Contours"><a class="docs-heading-anchor" href="#Contours">Contours</a><a id="Contours-1"></a><a class="docs-heading-anchor-permalink" href="#Contours" title="Permalink"></a></h2><p>Contour plots use a rectilinear grid described by <code>x</code>, <code>y</code>, and a <code>z</code> matrix with size <code>(length(y), length(x))</code>:</p><pre><code class="language-julia hljs">cx = collect(range(-2, 2; length=31))
+cy = collect(range(-2, 2; length=25))
+cz = [sin(xi) * cos(yi) for yi in cy, xi in cx]
+
+line_contour = Chart(
+    size = (10cm, 7cm),
+    title = &quot;Line Contours&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+add_contour(line_contour, cx, cy, cz; levels=-0.9:0.3:0.9, color=:black, label=&quot;`sin(x) cos(y)`&quot;)
+save(line_contour, &quot;getting-started-contour-lines.svg&quot;)</code></pre><p><img src="../getting-started-contour-lines.svg" alt/></p><p>Filled contours draw isolines too unless <code>line_style = :none</code>:</p><pre><code class="language-julia hljs">filled_contour = Chart(
+    size = (10cm, 7cm),
+    title = &quot;Filled Contours&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+add_contour(
+    filled_contour,
+    cx,
+    cy,
+    cz;
+    filled = true,
+    levels = -0.9:0.3:0.9,
+    color = :black,
+    colorbar = :right,
+    colorbar_label = &quot;`sin(x) cos(y)`&quot;,
+)
+save(filled_contour, &quot;getting-started-contour-filled.svg&quot;)</code></pre><p><img src="../getting-started-contour-filled.svg" alt/></p><pre><code class="language-julia hljs">filled_no_lines = Chart(
+    size = (10cm, 7cm),
+    title = &quot;Filled Without Lines&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+add_contour(
+    filled_no_lines,
+    cx,
+    cy,
+    cz;
+    filled = true,
+    levels = -0.9:0.3:0.9,
+    line_style = :none,
+    colorbar = :right,
+)
+save(filled_no_lines, &quot;getting-started-contour-filled-nolines.svg&quot;)</code></pre><p><img src="../getting-started-contour-filled-nolines.svg" alt/></p><h2 id="Vector-Fields"><a class="docs-heading-anchor" href="#Vector-Fields">Vector Fields</a><a id="Vector-Fields-1"></a><a class="docs-heading-anchor-permalink" href="#Vector-Fields" title="Permalink"></a></h2><p>Quiver plots draw a vector <code>(U, V)</code> at every <code>(x, y)</code> grid point. As with contours, the component matrices must have size <code>(length(y), length(x))</code>:</p><pre><code class="language-julia hljs">qx = collect(range(-2, 2; length=13))
+qy = collect(range(-1.5, 1.5; length=11))
+qu = [-yi for yi in qy, xi in qx]
+qv = [xi for yi in qy, xi in qx]
+
+quiver_chart = Chart(
+    size = (10cm, 7cm),
+    title = &quot;Rotational Field&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+add_quiver(
+    quiver_chart,
+    qx,
+    qy,
+    qu,
+    qv;
+    color = :royal_blue,
+    max_length = 11,
+    head_length = 3,
+)
+save(quiver_chart, &quot;getting-started-quiver.svg&quot;)</code></pre><p><img src="../getting-started-quiver.svg" alt/></p><p>Arrow lengths are normalized in screen space. Use <code>max_length</code> to set the longest arrow length and <code>stride</code> to thin dense grids. See the <a href="../../tutorial/field-plots/#Field-Plots-Tutorial">Field Plots Tutorial</a> for contour customization, flat vector inputs, and combined contour-quiver plots.</p><h2 id="Text-and-Math"><a class="docs-heading-anchor" href="#Text-and-Math">Text and Math</a><a id="Text-and-Math-1"></a><a class="docs-heading-anchor-permalink" href="#Text-and-Math" title="Permalink"></a></h2><p>Titles, labels, legends, series tags, and annotations can include inline math. Math spans can be delimited with backticks, such as <span>$&quot;`u_x(t)`&quot;$</span>, or with escaped dollar signs in normal Julia strings, such as <code>&quot;\$sigma_n\$&quot;</code> or <code>&quot;\$σ_n\$&quot;</code>. Backticks are preferred because they do not need escaping.</p><pre><code class="language-julia hljs">math_chart = Chart(
+    size = (9cm, 6cm),
+    title = &quot;Response `u_x(t)`&quot;,
+    background = :white,
+    xlabel = &quot;`t`&quot;,
+    ylabel = &quot;`u_x`&quot;,
+    legend = :top_right,
+)
+
+add_line(math_chart, x, exp.(-0.2 .* x) .* sin.(x); label = &quot;`e^(-0.2t) sin(t)`&quot;)
+save(math_chart, &quot;getting-started-math.svg&quot;)</code></pre><p>The math syntax is Typst-like and supports common expression features, including subscripts, superscripts, fractions, brackets, and bold text. Use parentheses for grouping instead of braces; for example, write <span>$`(a + b)/(c + d)`$</span> and <span>$`x_(i+1)^2`$</span> rather than brace-grouped forms. The <code>frac</code> function is not required for fractions, because slash notation can turn grouped expressions into fractions directly. Text that should remain upright inside math can be enclosed in single or double quotes. For example,</p><pre><code class="language-julia hljs">label = &quot;`σ_&#39;vm&#39;` [MPa]&quot;
+label = &quot;`σ_\&quot;vm\&quot;` [MPa]&quot;</code></pre><p>A single quote immediately following a valid math base denotes a prime. Double quotes always delimit upright text, so they are unambiguous in that context.</p><h2 id="Colors"><a class="docs-heading-anchor" href="#Colors">Colors</a><a id="Colors-1"></a><a class="docs-heading-anchor-permalink" href="#Colors" title="Permalink"></a></h2><p>Colors can be provided as named symbols, RGB/RGBA tuples, or <code>Color</code> values. Named colors accept underscore-free aliases, so <code>:royal_blue</code> and <code>:royalblue</code> refer to the same color. When a color symbol is misspelled, QuickCharts tries to suggest the closest valid name.</p><p>You can also derive related colors with <code>lighten</code> and <code>darken</code>, or sample a built-in <code>Colormap</code> such as <code>:viridis</code> or <code>:magma</code>:</p><pre><code class="language-julia hljs">cmap = Colormap(:viridis)
+
+color_chart = Chart(
+    size = (15cm, 10cm),
+    title = &quot;Styled Series&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+    legend = :bottom_left,
+)
+
+add_line(color_chart, x, sin.(x); color = lighten(:royal_blue, 0.15), line_width = 0.9, label = &quot;lighter alias&quot;)
+add_line(color_chart, x, cos.(x); color = darken(:tomato, 0.15), line_width = 0.9, label = &quot;darker named color&quot;)
+add_scatter(color_chart, x, 0.7 .* sin.(x .- 0.5); color = cmap(0.8), label = &quot;viridis sample&quot;)
+save(color_chart, &quot;getting-started-colors.svg&quot;)</code></pre><p><img src="../getting-started-colors.svg" alt/></p><p>When <code>color = :auto</code>, QuickCharts cycles through its default chart palette.</p><p>The alias behavior and typo suggestions are available directly through <code>Color</code>:</p><pre><code class="language-julia hljs">Color(:royalblue) == Color(:royal_blue)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; Color(:ligthblue)</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: ArgumentError: Color: unknown color symbol :ligthblue. Did you mean :lightblue?</code></pre><h2 id="Video-Generation"><a class="docs-heading-anchor" href="#Video-Generation">Video Generation</a><a id="Video-Generation-1"></a><a class="docs-heading-anchor-permalink" href="#Video-Generation" title="Permalink"></a></h2><p>Use <code>VideoBuilder</code> when you want to render a sequence of <code>Chart</code> or <code>ChartGrid</code> values to a video file. Each frame is stored when you call <code>add_frame</code>, and all frames must render to the same pixel size. Set <code>freeze_scale=true</code> to reuse the view from frame 1 across the whole animation, and use <code>bounds_factor&gt;1</code> when that frozen view needs extra space.</p><pre><code class="language-julia hljs">video = VideoBuilder(framerate = 10, freeze_scale = true, bounds_factor = 1.05)
+video_x = collect(range(0, 2π; length = 120))
+
+for phase in range(0, 2π; length = 12)
+    frame = Chart(
+        size = (10cm, 7cm),
+        title = &quot;Phase Sweep&quot;,
+        background = :white,
+        xlabel = &quot;`x`&quot;,
+        ylabel = &quot;`y`&quot;,
+        legend = :top_right,
+    )
+
+    add_line(frame, video_x, sin.(video_x .+ phase); color = :royalblue, label = &quot;`sin(x + ϕ)`&quot;)
+    add_line(frame, video_x, cos.(video_x .+ phase); color = Colormap(:magma)(0.75), label = &quot;`cos(x + ϕ)`&quot;)
+    add_frame(video, frame)
+end
+
+save(video, &quot;getting-started-animation.mp4&quot;)</code></pre><p>The default codec is selected from the file extension. At the moment, QuickCharts supports <code>.mp4</code> and <code>.avi</code> output.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Introduction</a><a class="docs-footer-nextpage" href="../../tutorial/chart-basics/">Chart Tutorial »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 5 July 2026 19:14">Sunday 5 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
