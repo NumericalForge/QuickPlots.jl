@@ -1,11 +1,11 @@
 # QuickCharts.jl
 
 
-[![docs-stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://numericalforge.github.io/QuickCharts.jl/stable/)
 [![docs-dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://numericalforge.github.io/QuickCharts.jl/dev/)
 
 
-`QuickCharts.jl` is a lightweight Julia package for chart-oriented plotting with Cairo output.
+`QuickCharts.jl` is a lightweight Julia package for chart-oriented plotting
+with Cairo output, including line, scatter, bar, contour, and quiver plots.
 
 It focuses on a compact set of figure-building tools: `Chart` for single plots, `ChartGrid` for composed layouts, `VideoBuilder` for frame-by-frame video export, and supporting types for colors, legends, annotations, and math-aware text rendering.
 
@@ -19,11 +19,11 @@ Highlights include:
 
 ## Installation
 
-Until `QuickCharts.jl` is registered, install it directly from the GitHub repository:
+Install `QuickCharts.jl` from Julia's General registry:
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/NumericalForge/QuickCharts.jl")
+Pkg.add("QuickCharts")
 ```
 
 ## Quick Start

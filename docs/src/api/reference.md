@@ -25,6 +25,7 @@ DataSeries
 LineSeries
 BarSeries
 ContourSeries
+QuiverSeries
 Legend
 Colorbar
 Annotation
@@ -42,6 +43,7 @@ add_line
 add_scatter
 add_bar
 add_contour
+add_quiver
 ```
 
 ## Figure Composition

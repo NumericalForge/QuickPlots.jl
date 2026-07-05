@@ -3,7 +3,7 @@
 QuickCharts builds figures from a small set of plotting primitives:
 
 - `Chart` creates a single set of axes.
-- `add_line`, `add_scatter`, `add_bar`, and `add_contour` add data series.
+- `add_line`, `add_scatter`, `add_bar`, `add_contour`, and `add_quiver` add data series.
 - `Annotation` and `add_annotation` add plot-area notes.
 - `ChartGrid` combines charts into multi-panel figures.
 - `VideoBuilder` and `add_frame` accumulate frames for animation export.
@@ -126,6 +126,45 @@ save(filled_no_lines, "getting-started-contour-filled-nolines.svg")
 ```
 
 ![](getting-started-contour-filled-nolines.svg)
+
+## Vector Fields
+
+Quiver plots draw a vector `(U, V)` at every `(x, y)` grid point. As with
+contours, the component matrices must have size `(length(y), length(x))`:
+
+```@example getting_started
+qx = collect(range(-2, 2; length=13))
+qy = collect(range(-1.5, 1.5; length=11))
+qu = [-yi for yi in qy, xi in qx]
+qv = [xi for yi in qy, xi in qx]
+
+quiver_chart = Chart(
+    size = (10cm, 7cm),
+    title = "Rotational Field",
+    background = :white,
+    xlabel = "`x`",
+    ylabel = "`y`",
+)
+
+add_quiver(
+    quiver_chart,
+    qx,
+    qy,
+    qu,
+    qv;
+    color = :royal_blue,
+    max_length = 11,
+    head_length = 3,
+)
+save(quiver_chart, "getting-started-quiver.svg")
+```
+
+![](getting-started-quiver.svg)
+
+Arrow lengths are normalized in screen space. Use `max_length` to set the
+longest arrow length and `stride` to thin dense grids. See the [Field Plots
+Tutorial](@ref) for contour customization, flat vector inputs, and combined
+contour-quiver plots.
 
 ## Text and Math
 

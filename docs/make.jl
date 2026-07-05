@@ -28,6 +28,7 @@ makedocs(
         "Manual" => [
             "Getting Started" => "manual/getting-started.md",
             "Chart Tutorial" => "tutorial/chart-basics.md",
+            "Field Plots Tutorial" => "tutorial/field-plots.md",
             "ChartGrid Tutorial" => "tutorial/chart-grid.md",
         ],
         "API Reference" => [
