@@ -585,6 +585,8 @@ function configure!(c::Chart)
     _prepare_chart_side_items!(c)
 
     _assign_chart_frames!(c)
+    configure!(c.xaxis; available_length=c.canvas.frame.width)
+    _assign_chart_frames!(c)
 
 end
 
@@ -992,7 +994,6 @@ function _assign_chart_frames!(c::Chart)
     _chart_assign_side_frames!(c, c.top_items, :top, _chart_side_pane_size(c.top_items, :top))
     _chart_assign_side_frames!(c, c.bottom_items, :bottom, _chart_side_pane_size(c.bottom_items, :bottom))
 end
-
 
 function _assign_legend_frame!(c::Chart, legend::Legend)
     plot = c.canvas.frame

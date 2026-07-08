@@ -17,12 +17,13 @@ Creates an `Axis` component.
 - `tick_labels::AbstractArray` : Labels for ticks (default `String[]`). Must match `length(ticks)` when provided.
 - `tick_length::Float64` : Tick mark length input (default `0.4*font_size`).
 - `nticks::Union{Int,Symbol}` : Hint for the number of tick intervals, or `:auto`
-  to choose a "nice" interval count that includes both axis endpoints.
+  to choose a nice interval count automatically.
 
 # Notes
 - `direction` and `location` control orientation and side.
 - If `tick_labels` are given, their count must equal `length(ticks)`.
-- `nticks=:auto` is the default and includes both axis endpoints with uniform spacing.
+- `nticks` is a hint; the actual number of intervals may differ slightly to keep
+  the ticks human-readable.
 - Explicit `ticks` take precedence.
 
 """
@@ -155,6 +156,12 @@ function _tick_decimal_places(value::Real; max_digits::Int=8)
 end
 
 
+function _tick_alignment_tolerance(value::Real, step::Real)
+    scale = max(abs(float(value)), abs(float(step)), 1.0)
+    return 1.0e-8 * scale
+end
+
+
 function _nice_step_score(step::Real)
     magnitude = abs(float(step))
     magnitude == 0.0 && return (Inf, typemax(Int))
@@ -167,32 +174,107 @@ function _nice_step_score(step::Real)
 end
 
 
+function _tick_alignment_index(value::Real, step::Real)
+    scaled = float(value) / float(step)
+    rounded = round(Int, scaled)
+    aligned = isapprox(float(value), rounded * float(step); atol=_tick_alignment_tolerance(value, step), rtol=1.0e-8)
+    return rounded, aligned
+end
+
+
 function _normalize_tick_value(value::Real)
     v = float(value)
     return isapprox(v, 0.0; atol=1.0e-12) ? 0.0 : v
 end
 
 
-function _auto_ticks(vinf::Real, vsup::Real, target::Int)
+function _ticks_for_step(lower::Real, upper::Real, step::Real)
+    step > 0 || return Float64[]
+    lo = float(lower)
+    hi = float(upper)
+    lo > hi && ((lo, hi) = (hi, lo))
+
+    start_idx, start_aligned = _tick_alignment_index(lo, step)
+    stop_idx, stop_aligned = _tick_alignment_index(hi, step)
+
+    if !start_aligned
+        start_idx = ceil(Int, (lo - _tick_alignment_tolerance(lo, step)) / step)
+    end
+    if !stop_aligned
+        stop_idx = floor(Int, (hi + _tick_alignment_tolerance(hi, step)) / step)
+    end
+
+    start_idx <= stop_idx || return Float64[]
+
+    ticks = Float64[_normalize_tick_value(idx * step) for idx in start_idx:stop_idx]
+    isempty(ticks) && return ticks
+
+    if isapprox(lo, ticks[1]; atol=_tick_alignment_tolerance(lo, step), rtol=1.0e-8)
+        ticks[1] = _normalize_tick_value(lo)
+    end
+    if isapprox(hi, ticks[end]; atol=_tick_alignment_tolerance(hi, step), rtol=1.0e-8)
+        ticks[end] = _normalize_tick_value(hi)
+    end
+
+    return ticks
+end
+
+
+function _tick_candidate_steps(raw_step::Real)
+    raw_step > 0 || return Float64[]
+    exponent = floor(Int, log10(raw_step))
+    steps = Float64[]
+    for ex in (exponent - 1):(exponent + 1)
+        scale = 10.0^ex
+        for mantissa in _nice_tick_mantissas
+            push!(steps, mantissa * scale)
+        end
+    end
+    push!(steps, abs(get_bin_length(0.0, raw_step, 1)))
+    unique!(sort!(steps))
+    return Float64[step for step in steps if step > 0]
+end
+
+
+function _auto_ticks(vinf::Real, vsup::Real, target::Int; prefer_endpoints::Bool=false)
     target > 0 || throw(ArgumentError("Axis: target must be positive"))
-    span = abs(float(vsup) - float(vinf))
-    span > 0 || return [_normalize_tick_value(float(vinf))]
+    lower = min(float(vinf), float(vsup))
+    upper = max(float(vinf), float(vsup))
+    span = upper - lower
+    span > 0 || return [_normalize_tick_value(lower)]
 
-    candidates = max(2, target - 3):(target + 3)
-    best_n = first(candidates)
-    best_score = (Inf, typemax(Int), typemax(Int), typemax(Int))
+    raw_step = span / target
+    best_ticks = Float64[]
+    best_score = (Inf, Inf, typemax(Int), Inf, 1, Inf)
+    crosses_zero = lower < 0 < upper
 
-    for n in candidates
-        step = span / n
+    for step in _tick_candidate_steps(raw_step)
+        ticks = _ticks_for_step(lower, upper, step)
+        isempty(ticks) && continue
+
+        intervals = max(length(ticks) - 1, 0)
         beauty, decimals = _nice_step_score(step)
-        score = (beauty, abs(n - target), decimals, n)
+        coverage = (ticks[end] - ticks[1]) / span
+        coverage_penalty = 1.0 - clamp(coverage, 0.0, 1.0)
+        zero_penalty = crosses_zero && !any(tick -> iszero(_normalize_tick_value(tick)), ticks) ? 1 : 0
+
+        endpoint_hits = 0
+        if prefer_endpoints
+            endpoint_hits += isapprox(lower, ticks[1]; atol=_tick_alignment_tolerance(lower, step), rtol=1.0e-8) ? 1 : 0
+            endpoint_hits += isapprox(upper, ticks[end]; atol=_tick_alignment_tolerance(upper, step), rtol=1.0e-8) ? 1 : 0
+        end
+        endpoint_penalty = prefer_endpoints ? 2 - endpoint_hits : 0
+
+        target_penalty = abs(intervals - target) + 2 * endpoint_penalty
+        score = (beauty, target_penalty, decimals, coverage_penalty, zero_penalty, step)
         if score < best_score
             best_score = score
-            best_n = n
+            best_ticks = ticks
         end
     end
 
-    return [_normalize_tick_value(tick) for tick in range(float(vinf), float(vsup); length=best_n + 1)]
+    isempty(best_ticks) && return [_normalize_tick_value(0.5 * (lower + upper))]
+    return best_ticks
 end
 
 
@@ -319,30 +401,18 @@ function axis_top_overhang(ax::Axis)
 end
 
 
-function configure!(ax::Axis)
+function _configure_axis_ticks!(ax::Axis, target::Int=ax.nticks_target)
     if ax.limits[1] == ax.limits[2]
         ax.limits = compute_auto_limits(ax.limits)
     end
 
-    # configure ticks
     if !ax.show_ticks
         ax.ticks = Float64[]
         ax.tick_labels = String[]
         _configure_exponent_box!(ax, 0)
     elseif !ax.manual_ticks || length(ax.ticks) == 0
         vinf, vsup = ax.limits
-        if ax.nticks_mode == :auto
-            ax.ticks = _auto_ticks(vinf, vsup, ax.nticks_target)
-        else
-            dv = get_bin_length(vinf, vsup, ax.nticks_target)
-            digits = _tick_round_digits(dv)
-
-            # roundup first tick
-            m = mod(vinf,dv)
-            vinf = m==0 ? vinf : vinf - m + dv
-
-            ax.ticks = unique(round.(collect(vinf:dv:vsup), digits=digits))
-        end
+        ax.ticks = _auto_ticks(vinf, vsup, target; prefer_endpoints=!ax.auto_limits)
     else # check ticks
         vmin = minimum(ax.limits)
         vmax = maximum(ax.limits)
@@ -360,6 +430,69 @@ function configure!(ax::Axis)
     end
 
     ax.nticks = ax.show_ticks ? max(length(ax.ticks) - 1, 0) : 0
+    return nothing
+end
+
+
+function _axis_tick_overlap_amount(ax::Axis, available_length::Real)
+    ax.direction == :horizontal || return 0.0
+    ax.show_ticks && !ax.manual_ticks && !isempty(ax.ticks) && !isempty(ax.tick_labels) || return 0.0
+
+    xmin, xmax = ax.limits
+    abs(xmax - xmin) > eps(Float64) || return 0.0
+    available = float(available_length)
+    available > 0 || return Inf
+
+    spans = Tuple{Float64,Float64,Float64}[]
+    for (tick, label) in zip(ax.ticks, ax.tick_labels)
+        center = available / (xmax - xmin) * (tick - xmin)
+        half_width = 0.5 * getsize(label, ax.font_size)[1]
+        push!(spans, (center, center - half_width, center + half_width))
+    end
+    sort!(spans; by=first)
+
+    min_gap = 0.25 * ax.font_size
+    overlap = 0.0
+    for i in 1:(length(spans) - 1)
+        gap = spans[i + 1][2] - spans[i][3]
+        if gap < min_gap
+            overlap += min_gap - gap
+        end
+    end
+
+    return overlap
+end
+
+
+function _refine_axis_ticks!(ax::Axis, available_length::Real)
+    ax.direction == :horizontal || return nothing
+    ax.show_ticks && !ax.manual_ticks || return nothing
+
+    best_target = ax.nticks_target
+    best_overlap = _axis_tick_overlap_amount(ax, available_length)
+    best_overlap <= 0 && return nothing
+
+    max_intervals = max(ax.nticks_target, ax.nticks, 1)
+    for target in (max_intervals - 1):-1:1
+        _configure_axis_ticks!(ax, target)
+        overlap = _axis_tick_overlap_amount(ax, available_length)
+
+        if overlap < best_overlap - 1.0e-8
+            best_overlap = overlap
+            best_target = target
+        end
+
+        overlap <= 0 && break
+    end
+
+    _configure_axis_ticks!(ax, best_target)
+    return nothing
+end
+
+
+function configure!(ax::Axis; available_length::Union{Nothing,Real}=nothing)
+    _configure_axis_ticks!(ax)
+    available_length === nothing || _refine_axis_ticks!(ax, available_length)
 
     # configure size (axis dimensions do do not include tick lengths)
     ax.tick_length = ax.show_ticks ? 0.4*ax.font_size : 0.0

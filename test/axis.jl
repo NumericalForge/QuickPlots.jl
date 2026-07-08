@@ -41,6 +41,14 @@ QuickCharts.configure!(line_chart)
 @test line_chart.xaxis.tick_exponent == 4
 @test line_chart.yaxis.tick_exponent == -5
 
+ugly_limits = [-2.03165, 69.75315]
+ugly_axis = QuickCharts.Axis(direction=:horizontal, limits=ugly_limits, nticks=:auto)
+QuickCharts.configure!(ugly_axis)
+@test ugly_axis.limits == ugly_limits
+@test ugly_axis.ticks == [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0]
+@test 0.0 in ugly_axis.ticks
+@test all(isapprox(δ, 10.0; atol=1.0e-8) for δ in diff(ugly_axis.ticks))
+
 endpoint_chart = Chart(xlimits=[0.0, 10.0], ylimits=[0.0, 10.0])
 add_line(endpoint_chart, [0.0, 10.0], [0.0, 10.0]; label="diag")
 QuickCharts.configure!(endpoint_chart)
@@ -69,8 +77,20 @@ QuickCharts.configure!(auto_uniform)
 
 fixed_ticks = QuickCharts.Axis(direction=:horizontal, limits=[0.0, 10.0], nticks=7)
 QuickCharts.configure!(fixed_ticks)
-@test fixed_ticks.ticks == [0.0, 1.5, 3.0, 4.5, 6.0, 7.5, 9.0]
-@test fixed_ticks.nticks == 6
+@test fixed_ticks.ticks == [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
+@test fixed_ticks.nticks == 5
+
+partial_limits = QuickCharts.Axis(direction=:horizontal, limits=[0.0, 10.3], nticks=:auto)
+QuickCharts.configure!(partial_limits)
+@test partial_limits.limits == [0.0, 10.3]
+@test partial_limits.ticks[1] == 0.0
+@test partial_limits.ticks[end] < 10.3
+@test all(isapprox(δ, 1.5; atol=1.0e-8) for δ in diff(partial_limits.ticks))
+
+narrow_axis = QuickCharts.Axis(direction=:horizontal, limits=[0.0, 10.3], nticks=:auto)
+QuickCharts.configure!(narrow_axis; available_length=25.0)
+@test narrow_axis.nticks < narrow_axis.nticks_target
+@test QuickCharts._axis_tick_overlap_amount(narrow_axis, 25.0) == 0.0
 
 hidden_ticks = QuickCharts.Axis(direction=:horizontal, limits=[0.0, 1.0], label="x", ticks=:none)
 QuickCharts.configure!(hidden_ticks)
@@ -93,6 +113,11 @@ QuickCharts.configure!(cb_fig, cb_auto)
 @test cb_auto.axis.ticks[1] == 0.0
 @test cb_auto.axis.ticks[end] == 10.0
 @test length(unique(round.(diff(cb_auto.axis.ticks); digits=8))) == 1
+
+cb_ugly = QuickCharts.Colorbar(location=:right, limits=ugly_limits, bins=:auto)
+QuickCharts.configure!(cb_fig, cb_ugly)
+@test cb_ugly.axis.limits == ugly_limits
+@test cb_ugly.axis.ticks == ugly_axis.ticks
 
 cb_manual = QuickCharts.Colorbar(location=:right, limits=[0.0, 10.0], bins=:auto, ticks=[0.0, 3.0, 10.0])
 QuickCharts.configure!(cb_fig, cb_manual)

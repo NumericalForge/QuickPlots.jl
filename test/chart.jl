@@ -216,3 +216,25 @@ auto_plot_frame = QuickCharts._chart_plot_frame(auto_chart)
 @test isapprox(auto_chart.canvas.frame.y, auto_plot_frame.y; atol=1.0e-8)
 @test isapprox(auto_chart.canvas.frame.width, auto_plot_frame.width; atol=1.0e-8)
 @test isapprox(auto_chart.canvas.frame.height, auto_plot_frame.height; atol=1.0e-8)
+
+overlap_chart = Chart(
+    size=(70.0, 50.0),
+    xlimits=[0.0, 10.3],
+    ylimits=[0.0, 1.0],
+)
+add_line(overlap_chart, [0.0, 10.3], [0.0, 1.0]; label="diag")
+QuickCharts.configure!(overlap_chart)
+@test overlap_chart.xaxis.limits == [0.0, 10.3]
+@test overlap_chart.xaxis.nticks < overlap_chart.xaxis.nticks_target
+@test QuickCharts._axis_tick_overlap_amount(overlap_chart.xaxis, overlap_chart.canvas.frame.width) == 0.0
+
+manual_overlap_chart = Chart(
+    size=(70.0, 50.0),
+    xlimits=[0.0, 10.0],
+    ylimits=[0.0, 1.0],
+    xticks=[0.0, 2.0, 4.0, 6.0, 8.0, 10.0],
+)
+add_line(manual_overlap_chart, [0.0, 10.0], [0.0, 1.0]; label="diag")
+QuickCharts.configure!(manual_overlap_chart)
+@test manual_overlap_chart.xaxis.limits == [0.0, 10.0]
+@test manual_overlap_chart.xaxis.ticks == [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
