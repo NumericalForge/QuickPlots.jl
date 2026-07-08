@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Field Plots Tutorial · QuickCharts.jl</title><meta name="title" content="Field Plots Tutorial · QuickCharts.jl"/><meta property="og:title" content="Field Plots Tutorial · QuickCharts.jl"/><meta property="twitter:title" content="Field Plots Tutorial · QuickCharts.jl"/><meta name="description" content="Documentation for QuickCharts.jl."/><meta property="og:description" content="Documentation for QuickCharts.jl."/><meta property="twitter:description" content="Documentation for QuickCharts.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">QuickCharts.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox" checked/><label class="tocitem" for="menuitem-2"><span class="docs-label">Manual</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../manual/getting-started/">Getting Started</a></li><li><a class="tocitem" href="../chart-basics/">Chart Tutorial</a></li><li class="is-active"><a class="tocitem" href>Field Plots Tutorial</a><ul class="internal"><li><a class="tocitem" href="#Prepare-Grid-Data"><span>Prepare Grid Data</span></a></li><li><a class="tocitem" href="#Line-Contours"><span>Line Contours</span></a></li><li><a class="tocitem" href="#Filled-Contours-and-Colorbars"><span>Filled Contours and Colorbars</span></a></li><li><a class="tocitem" href="#Quiver-Plots-on-a-Grid"><span>Quiver Plots on a Grid</span></a></li><li><a class="tocitem" href="#Flat-Vector-Data"><span>Flat Vector Data</span></a></li><li><a class="tocitem" href="#Combine-Contours-and-Vectors"><span>Combine Contours and Vectors</span></a></li></ul></li><li><a class="tocitem" href="../chart-grid/">ChartGrid Tutorial</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../api/reference/">Reference</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href>Field Plots Tutorial</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Field Plots Tutorial</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/NumericalForge/QuickCharts.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Field-Plots-Tutorial"><a class="docs-heading-anchor" href="#Field-Plots-Tutorial">Field Plots Tutorial</a><a id="Field-Plots-Tutorial-1"></a><a class="docs-heading-anchor-permalink" href="#Field-Plots-Tutorial" title="Permalink"></a></h1><p>Contour plots visualize a scalar field, while quiver plots visualize a vector field. Both accept data on a rectilinear grid and can be combined in the same <code>Chart</code>.</p><h2 id="Prepare-Grid-Data"><a class="docs-heading-anchor" href="#Prepare-Grid-Data">Prepare Grid Data</a><a id="Prepare-Grid-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Prepare-Grid-Data" title="Permalink"></a></h2><p>For grid-based plots, <code>x</code> contains the horizontal coordinates and <code>y</code> contains the vertical coordinates. Every field matrix must have size <code>(length(y), length(x))</code>: rows correspond to <code>y</code> and columns correspond to <code>x</code>.</p><pre><code class="language-julia hljs">using QuickCharts
+
+x = collect(range(-2.5, 2.5; length = 41))
+y = collect(range(-2.0, 2.0; length = 33))
+
+z = [exp(-(xi^2 + yi^2) / 2) * cos(2xi) for yi in y, xi in x]
+u = [-yi for yi in y, xi in x]
+v = [xi for yi in y, xi in x]
+
+size(z) == size(u) == size(v) == (length(y), length(x))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><h2 id="Line-Contours"><a class="docs-heading-anchor" href="#Line-Contours">Line Contours</a><a id="Line-Contours-1"></a><a class="docs-heading-anchor-permalink" href="#Line-Contours" title="Permalink"></a></h2><p><code>add_contour</code> draws isolines by default. Supply explicit <code>levels</code>, or use <code>nlevels</code> to let QuickCharts choose evenly spaced values from the finite data. The <code>color</code>, <code>line_width</code>, and <code>line_style</code> keywords style the isolines.</p><pre><code class="language-julia hljs">line_chart = Chart(
+    size = (12cm, 8cm),
+    title = &quot;Line Contours&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+add_contour(
+    line_chart,
+    x,
+    y,
+    z;
+    levels = -0.6:0.15:0.9,
+    color = :royal_blue,
+    line_width = 0.7,
+)
+save(line_chart, &quot;tutorial-contour-lines.svg&quot;)</code></pre><p><img src="../tutorial-contour-lines.svg" alt/></p><p>The coordinate vectors must be strictly monotone. Nonuniform spacing is supported, and non-finite matrix values are left out of the contour geometry.</p><h2 id="Filled-Contours-and-Colorbars"><a class="docs-heading-anchor" href="#Filled-Contours-and-Colorbars">Filled Contours and Colorbars</a><a id="Filled-Contours-and-Colorbars-1"></a><a class="docs-heading-anchor-permalink" href="#Filled-Contours-and-Colorbars" title="Permalink"></a></h2><p>Set <code>filled = true</code> to color the bands between levels. Filled contours retain their isolines by default; use <code>line_style = :none</code> for color bands only. <code>colormap</code> accepts a <code>Colormap</code> or a built-in colormap name.</p><pre><code class="language-julia hljs">filled_chart = Chart(
+    size = (12cm, 8cm),
+    title = &quot;Filled Contours&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+add_contour(
+    filled_chart,
+    x,
+    y,
+    z;
+    filled = true,
+    levels = -0.6:0.15:0.9,
+    colormap = :viridis,
+    color = :black,
+    line_width = 0.35,
+    colorbar = :right,
+    colorbar_label = &quot;`z(x, y)`&quot;,
+)
+save(filled_chart, &quot;tutorial-contour-filled.svg&quot;)</code></pre><p><img src="../tutorial-contour-filled.svg" alt/></p><p>The colorbar can be placed at <code>:left</code>, <code>:right</code>, <code>:top</code>, or <code>:bottom</code>, or disabled with <code>:none</code>. Use <code>colorbar_ticks</code> together with <code>colorbar_tick_labels</code> when the displayed values need custom labels.</p><h2 id="Quiver-Plots-on-a-Grid"><a class="docs-heading-anchor" href="#Quiver-Plots-on-a-Grid">Quiver Plots on a Grid</a><a id="Quiver-Plots-on-a-Grid-1"></a><a class="docs-heading-anchor-permalink" href="#Quiver-Plots-on-a-Grid" title="Permalink"></a></h2><p><code>add_quiver(chart, x, y, U, V)</code> places the vector <code>(U[i, j], V[i, j])</code> at <code>(x[j], y[i])</code>. Vectors are transformed and normalized in screen space, so the field direction remains visually correct even when the axes have different scales. The longest visible vector receives the requested <code>max_length</code> in typographic points.</p><pre><code class="language-julia hljs">quiver_chart = Chart(
+    size = (12cm, 8cm),
+    title = &quot;Rotational Vector Field&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+add_quiver(
+    quiver_chart,
+    x,
+    y,
+    u,
+    v;
+    stride = (4, 4),
+    color = :dark_orange,
+    line_width = 0.65,
+    max_length = 12,
+    head_length = 3.5,
+)
+save(quiver_chart, &quot;tutorial-quiver.svg&quot;)</code></pre><p><img src="../tutorial-quiver.svg" alt/></p><p>Use <code>stride = n</code> to retain every <code>n</code>th point in both directions, or <code>stride = (nx, ny)</code> to thin the horizontal and vertical directions independently. Zero-length and non-finite vectors are not drawn.</p><h2 id="Flat-Vector-Data"><a class="docs-heading-anchor" href="#Flat-Vector-Data">Flat Vector Data</a><a id="Flat-Vector-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Flat-Vector-Data" title="Permalink"></a></h2><p>Quiver plots also accept four equally sized vectors. This overload is useful for irregularly positioned samples because each element supplies one anchor and one vector:</p><pre><code class="language-julia hljs">sample_chart = Chart(
+    size = (10cm, 7cm),
+    title = &quot;Irregular Vector Samples&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+X = [-1.8, -0.7, 0.2, 1.1, 2.0]
+Y = [-0.8, 0.9, -1.2, 0.6, -0.3]
+U = -Y
+V = X
+
+add_quiver(sample_chart, X, Y, U, V; color = :forest_green, max_length = 16)
+save(sample_chart, &quot;tutorial-quiver-flat.svg&quot;)</code></pre><p><img src="../tutorial-quiver-flat.svg" alt/></p><p>For flat inputs, <code>stride = n</code> retains every <code>n</code>th vector in input order.</p><h2 id="Combine-Contours-and-Vectors"><a class="docs-heading-anchor" href="#Combine-Contours-and-Vectors">Combine Contours and Vectors</a><a id="Combine-Contours-and-Vectors-1"></a><a class="docs-heading-anchor-permalink" href="#Combine-Contours-and-Vectors" title="Permalink"></a></h2><p>Series can be layered by adding them to the same chart. A common pattern is a filled scalar field below a thinned vector field.</p><pre><code class="language-julia hljs">combined_chart = Chart(
+    size = (12cm, 8cm),
+    title = &quot;Scalar and Vector Fields&quot;,
+    background = :white,
+    xlabel = &quot;`x`&quot;,
+    ylabel = &quot;`y`&quot;,
+)
+
+add_contour(
+    combined_chart,
+    x,
+    y,
+    z;
+    filled = true,
+    levels = -0.6:0.15:0.9,
+    colormap = :viridis,
+    line_style = :none,
+    colorbar = :right,
+    colorbar_label = &quot;`z`&quot;,
+)
+add_quiver(
+    combined_chart,
+    x,
+    y,
+    u,
+    v;
+    stride = (4, 4),
+    color = :white,
+    line_width = 0.7,
+    max_length = 11,
+    head_length = 3,
+)
+save(combined_chart, &quot;tutorial-fields-combined.svg&quot;)</code></pre><p><img src="../tutorial-fields-combined.svg" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../chart-basics/">« Chart Tutorial</a><a class="docs-footer-nextpage" href="../chart-grid/">ChartGrid Tutorial »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 8 July 2026 01:02">Wednesday 8 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
